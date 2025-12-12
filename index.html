@@ -1,0 +1,405 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no" />
+  <meta name="theme-color" content="#0f172a">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <title>SafePal 充值助手 (无痕版)</title>
+  <style>
+    :root{
+      --bg:#0f172a; --card:#1e293b; --card-highlight:#334155;
+      --text:#f1f5f9; --muted:#94a3b8; --border:rgba(255,255,255,0.1);
+      --accent:#3b82f6; --accent-hover:#2563eb;
+      --gold:#fbbf24; --green:#10b981; --red:#ef4444;
+      --radius:16px;
+      --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      --font-sans: ui-sans-serif, system-ui, -apple-system, sans-serif;
+    }
+    *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+    body{
+      margin:0; font-family:var(--font-sans); 
+      background:var(--bg); color:var(--text);
+      padding:20px; line-height:1.5; padding-bottom:40px;
+    }
+    .wrap{max-width:1000px; margin:0 auto;}
+    
+    header{margin-bottom:20px; border-bottom:1px solid var(--border); padding-bottom:16px;}
+    h1{margin:0 0 6px; font-size:20px; color:#fff; display:flex; align-items:center; gap:8px;}
+    .badge{font-size:10px; padding:2px 6px; border-radius:4px; background:rgba(255,255,255,0.1); color:var(--muted); border:1px solid var(--border);}
+    .pill{display:inline-block; font-size:11px; padding:2px 8px; border-radius:4px; background:rgba(255,255,255,0.05); color:var(--muted); border:1px solid var(--border);}
+
+    .grid{display:grid; grid-template-columns: 1.1fr 0.9fr; gap:20px;}
+    @media (max-width: 800px){ .grid{grid-template-columns:1fr} }
+
+    .card{background:var(--card); border:1px solid var(--border); border-radius:var(--radius); padding:20px; box-shadow:0 8px 24px rgba(0,0,0,0.2);}
+    .card-head{display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;}
+    .card-title{font-size:15px; font-weight:600; color:#fff;}
+    .btn-reset{font-size:11px; padding:4px 10px; background:transparent; border:1px solid var(--border); color:var(--muted); border-radius:6px; cursor:pointer;}
+    
+    .step-title{
+      font-size:11px; text-transform:uppercase; letter-spacing:1px; font-weight:700;
+      color:var(--muted); margin:20px 0 10px; display:flex; align-items:center; gap:8px;
+    }
+    .step-num{background:var(--card-highlight); color:#fff; width:18px; height:18px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:10px;}
+
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;}
+    .row:last-child{margin-bottom:0;}
+    
+    .input-group label{display:flex; justify-content:space-between; align-items:center; font-size:12px; color:var(--muted); margin-bottom:6px;}
+    
+    .lock-icon{cursor:pointer; opacity:0.6; transition:all 0.2s; padding:2px 6px; border-radius:4px;}
+    .lock-icon:hover{opacity:1; background:rgba(255,255,255,0.1);}
+    
+    input[type="number"]{
+      width:100%; padding:12px; border-radius:10px; border:1px solid var(--border);
+      background:#0f172a; color:#fff; font-family:var(--font-mono); font-size:15px;
+      transition:all 0.2s;
+    }
+    input:focus{outline:none; border-color:var(--accent);}
+    input[readonly]{background:rgba(255,255,255,0.02); color:rgba(255,255,255,0.4); border-color:transparent; cursor:default;}
+    
+    .hint{font-size:11px; color:var(--muted); margin-top:4px; opacity:0.6;}
+
+    .hero{
+      background:linear-gradient(135deg, rgba(59,130,246,0.1), rgba(59,130,246,0.02));
+      border:1px solid rgba(59,130,246,0.25); border-radius:12px; padding:24px; text-align:center;
+      margin-bottom:20px; transition:all 0.3s;
+    }
+    .hero.success{background:linear-gradient(135deg, rgba(16,185,129,0.1), rgba(16,185,129,0.02)); border-color:rgba(16,185,129,0.3);}
+    
+    .hero h3{margin:0; font-size:12px; color:var(--accent); text-transform:uppercase; letter-spacing:1px;}
+    .hero.success h3{color:var(--green);}
+    
+    .hero .val{font-size:36px; font-family:var(--font-mono); font-weight:700; color:#fff; margin:10px 0;}
+    .hero .tag{font-size:12px; color:var(--muted); background:rgba(0,0,0,0.2); padding:4px 10px; border-radius:20px;}
+
+    .alert{
+      display:none; background:rgba(239,68,68,0.1); border:1px solid rgba(239,68,68,0.3);
+      color:var(--red); padding:12px; border-radius:8px; font-size:13px; margin-bottom:16px;
+      animation: fadeIn 0.3s ease;
+    }
+    @keyframes fadeIn { from{opacity:0; transform:translateY(-5px);} to{opacity:1; transform:translateY(0);} }
+
+    .list{display:grid; gap:0;}
+    .list-item{display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border);}
+    .list-item:last-child{border-bottom:none;}
+    .list-item span:first-child{font-size:13px; color:var(--muted);}
+    .list-item span:last-child{font-family:var(--font-mono); font-size:14px; color:#e2e8f0;}
+
+    .check-area{margin:20px 0 16px; padding:12px; background:rgba(255,255,255,0.02); border-radius:8px; border:1px dashed var(--border);}
+    .check-label{display:flex; align-items:center; gap:10px; font-size:13px; cursor:pointer; user-select:none;}
+    .check-label input{accent-color:var(--accent); width:16px; height:16px;}
+    
+    .btn-main{
+      width:100%; padding:14px; border:none; border-radius:10px; 
+      background:var(--accent); color:#fff; font-weight:600; font-size:15px; cursor:pointer;
+      box-shadow:0 4px 12px rgba(59,130,246,0.3); transition:transform 0.1s;
+    }
+    .btn-main:active{transform:scale(0.98);}
+    
+    .btn-copy{
+      width:100%; margin-top:12px; padding:12px; background:transparent; 
+      border:1px solid var(--border); color:var(--muted); border-radius:10px; cursor:pointer; font-size:13px;
+      display:flex; align-items:center; justify-content:center; gap:6px;
+    }
+    .btn-copy:hover{border-color:var(--accent); color:var(--accent);}
+
+    .c-gold{color:var(--gold)}
+    .c-green{color:var(--green)}
+    .c-red{color:var(--red)}
+    .hidden{display:none !important;}
+  </style>
+</head>
+<body>
+
+<div class="wrap">
+  <header>
+    <h1>SafePal 充值助手 <span class="badge">无痕版</span></h1>
+    <div class="pill">USDT → USDC (Arb) → SafePal Bank</div>
+  </header>
+
+  <div class="grid">
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">参数配置</div>
+        <button class="btn-reset" id="btnReset">重置默认</button>
+      </div>
+
+      <div class="step-title"><span class="step-num">1</span> 钱包状态 (SafePal)</div>
+      <div class="row">
+        <div class="input-group">
+          <label>当前 USD 余额</label>
+          <input id="usdBalance" type="number" step="0.01" value="0.00" placeholder="0.00" autocomplete="off" />
+        </div>
+        <div class="input-group">
+          <label>目标 USD 金额</label>
+          <input id="usdTarget" type="number" step="0.01" value="20.01" autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="step-title"><span class="step-num">2</span> 损耗与保险 (Fees)</div>
+      <div class="row">
+        <div class="input-group">
+          <label>币安提现费 (USDC)</label>
+          <input id="withdrawFee" type="number" value="0.24" autocomplete="off" />
+          <div class="hint">Arbitrum 网络</div>
+        </div>
+        <div class="input-group">
+          <label>
+            SP 到账比例
+            <span class="lock-icon" data-target="safepalRatio" title="解锁">🔒</span>
+          </label>
+          <input id="safepalRatio" type="number" value="0.99" readonly autocomplete="off" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-group">
+          <label>
+            截断保险 (USD)
+            <span class="lock-icon" data-target="truncIns" title="解锁">🔒</span>
+          </label>
+          <input id="truncIns" type="number" step="0.01" value="0.01" readonly autocomplete="off" />
+        </div>
+        <div class="input-group">
+          <label>
+            C2C 冗余 (USDT)
+            <span class="lock-icon" data-target="extraIns" title="解锁">🔒</span>
+          </label>
+          <input id="extraIns" type="number" step="0.01" value="0.02" readonly autocomplete="off" />
+        </div>
+      </div>
+
+      <div class="step-title"><span class="step-num">3</span> 汇率 (Binance)</div>
+      <div class="row">
+        <div class="input-group">
+          <label>闪兑付出 USDT</label>
+          <input id="swapPayUsdt" type="number" value="1000" autocomplete="off" />
+        </div>
+        <div class="input-group">
+          <label>闪兑收到 USDC</label>
+          <input id="swapGetUsdc" type="number" value="1001.00" autocomplete="off" />
+          <div class="hint" id="kVal">k ≈ 1.001</div>
+        </div>
+      </div>
+      <div class="row">
+        <div class="input-group" style="grid-column: span 2;">
+          <label>USDT 参考价 (CNY)</label>
+          <input id="cnyPrice" type="number" step="0.01" value="7.40" placeholder="例如 7.35" autocomplete="off" />
+          <div class="hint">用于预估人民币支出</div>
+        </div>
+      </div>
+
+      <div class="check-area">
+        <label class="check-label">
+          <input type="checkbox" id="hasGas" checked>
+          <span>确认：钱包已有 ETH (Arb) 做 Gas</span>
+        </label>
+        <div id="gasWarning" style="display:none; color:var(--gold); font-size:12px; margin-top:8px; padding-left:26px;">
+          ⚠️ 必须有 ETH 才能充值，否则资金会卡在钱包里。
+        </div>
+      </div>
+
+      <button class="btn-main" id="btnCalc">计算购买方案</button>
+    </div>
+
+    <div class="card">
+      <div class="card-head">
+        <div class="card-title">执行方案</div>
+      </div>
+
+      <div class="hero" id="heroCard">
+        <h3 id="heroTitle">建议 C2C 购买 (USDT)</h3>
+        <div class="val" id="resFinalUSDT">—</div>
+        <div class="tag" id="resFinalTag">含损耗+保险</div>
+        <div style="margin-top:10px; font-size:13px; color:var(--muted); border-top:1px solid rgba(255,255,255,0.1); padding-top:8px;">
+          预估支出: <span style="color:#fff; font-weight:700;">≈ ¥<span id="resEstCNY">0.00</span></span>
+        </div>
+      </div>
+
+      <div class="alert" id="limitAlert">
+        <strong>⚠️ 门槛警告</strong><br/>
+        补款额 < 10 USDC，SafePal 或币安可能拒绝处理。建议直接充 10 USDC。
+      </div>
+
+      <div class="list" id="resultList">
+        <div class="list-item">
+          <span>需补足 USD</span>
+          <span id="resNeedUSD">—</span>
+        </div>
+        <div class="list-item">
+          <span>SafePal 充值 (USDC)</span>
+          <span id="resTopupUSDC" class="c-gold">—</span>
+        </div>
+        <div class="list-item">
+          <span>币安提现 (USDC)</span>
+          <span id="resWithdraw">—</span>
+        </div>
+        <div class="list-item">
+          <span>预测最终余额</span>
+          <span id="resEndBalance" class="c-green">—</span>
+        </div>
+      </div>
+
+      <button class="btn-copy" id="btnCopy">
+        <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+        复制清单
+      </button>
+      <div id="copyMsg" style="text-align:center; font-size:12px; color:var(--green); height:20px; margin-top:5px;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const $ = s => document.querySelector(s);
+  const $$ = s => document.querySelectorAll(s);
+  const fmt = (n, d=2) => Number(n).toFixed(d);
+  const ceil2 = n => Math.ceil(n * 100) / 100;
+  const floor2 = n => Math.floor(n * 100) / 100;
+
+  function calc() {
+    // 1. 读取基础参数
+    const B = parseFloat($("#usdBalance").value) || 0;
+    const T = parseFloat($("#usdTarget").value) || 20.01;
+    const fee = parseFloat($("#withdrawFee").value) || 0;
+    const cnyRate = parseFloat($("#cnyPrice").value) || 0;
+    
+    // 高级参数
+    const ratio = parseFloat($("#safepalRatio").value) || 0.99;
+    const truncIns = parseFloat($("#truncIns").value) || 0.01;
+    const extraIns = parseFloat($("#extraIns").value) || 0.02;
+
+    // 闪兑汇率
+    const pay = parseFloat($("#swapPayUsdt").value) || 1;
+    const get = parseFloat($("#swapGetUsdc").value) || 1;
+    const k = (pay > 0) ? get / pay : 1;
+    $("#kVal").innerText = `k ≈ ${k.toFixed(5)}`;
+
+    // 2. 逻辑判断
+    const needUSD = Math.max(0, T - B);
+    const heroCard = $("#heroCard");
+    const resultList = $("#resultList");
+    const limitAlert = $("#limitAlert");
+
+    if (needUSD <= 0) {
+      // --- 资金充足 ---
+      heroCard.classList.add("success");
+      $("#heroTitle").innerText = "无需操作";
+      $("#resFinalUSDT").innerText = "资金充足";
+      $("#resFinalTag").innerText = "余额 ≥ 目标";
+      $("#resEstCNY").innerText = "0.00";
+      
+      limitAlert.style.display = "none";
+      resultList.style.opacity = "0.5";
+      
+      $("#resNeedUSD").innerText = "0.00";
+      $("#resTopupUSDC").innerText = "0.0000";
+      $("#resWithdraw").innerText = "0.0000";
+      $("#resEndBalance").innerText = fmt(B);
+      
+      return; 
+    }
+
+    // --- 正常计算 ---
+    heroCard.classList.remove("success");
+    $("#heroTitle").innerText = "建议 C2C 购买 (USDT)";
+    resultList.style.opacity = "1";
+
+    let topupUSDC = (needUSD + truncIns) / ratio;
+    const withdrawInput = topupUSDC + fee;
+    const needRaw = withdrawInput / k;
+    const finalUSDT = ceil2(needRaw + extraIns);
+    const estCNY = finalUSDT * cnyRate;
+    const predictCredit = floor2(topupUSDC * ratio);
+    const endBal = B + predictCredit;
+
+    $("#resNeedUSD").innerText = fmt(needUSD);
+    $("#resTopupUSDC").innerText = fmt(topupUSDC, 4);
+    $("#resWithdraw").innerText = fmt(withdrawInput, 4);
+    $("#resEndBalance").innerText = fmt(endBal);
+    $("#resFinalUSDT").innerText = fmt(finalUSDT);
+    $("#resFinalTag").innerText = "含损耗+保险";
+    $("#resEstCNY").innerText = fmt(estCNY);
+
+    const topupEl = $("#resTopupUSDC");
+    if(topupUSDC < 10) {
+      limitAlert.style.display = "block";
+      topupEl.classList.add("c-red");
+      topupEl.classList.remove("c-gold");
+    } else {
+      limitAlert.style.display = "none";
+      topupEl.classList.remove("c-red");
+      topupEl.classList.add("c-gold");
+    }
+    // 无痕模式：计算完不保存
+  }
+
+  // --- 交互逻辑 ---
+  
+  // 锁控制
+  $$('.lock-icon').forEach(icon => {
+    icon.addEventListener('click', (e) => {
+      const targetId = e.target.dataset.target;
+      const input = $("#" + targetId);
+      const isLocked = input.hasAttribute("readonly");
+      
+      if(isLocked) {
+        input.removeAttribute("readonly");
+        e.target.innerText = "🔓";
+        input.focus();
+      } else {
+        input.setAttribute("readonly", true);
+        e.target.innerText = "🔒";
+      }
+    });
+  });
+
+  // Gas 警告
+  $("#hasGas").addEventListener("change", (e) => {
+    $("#gasWarning").style.display = e.target.checked ? "none" : "block";
+  });
+
+  // 复制功能
+  $("#btnCopy").addEventListener("click", () => {
+    const now = new Date();
+    const timeStr = `${now.getMonth()+1}-${now.getDate()} ${now.getHours()}:${now.getMinutes()}`;
+    
+    const txt = `[SafePal充值单] ${timeStr}\n----------------\n需补: ${$("#resNeedUSD").innerText} USD\n当前余额: ${$("#usdBalance").value}\n----------------\n1. 闪兑参考: ${$("#kVal").innerText}\n2. C2C购买: ${$("#resFinalUSDT").innerText} USDT (≈¥${$("#resEstCNY").innerText})\n3. 提现输入: ${$("#resWithdraw").innerText} USDC\n----------------\n预测余额: ${$("#resEndBalance").innerText}`;
+    
+    navigator.clipboard.writeText(txt).then(() => {
+      $("#copyMsg").innerText = "✅ 已复制";
+      setTimeout(()=>$("#copyMsg").innerText="", 2000);
+    });
+  });
+
+  function lockAll() {
+    ["safepalRatio", "truncIns", "extraIns"].forEach(id => {
+      $("#"+id).setAttribute("readonly", true);
+      $(`.lock-icon[data-target="${id}"]`).innerText = "🔒";
+    });
+  }
+
+  $("#btnReset").addEventListener("click", () => {
+    // 恢复所有默认值
+    $("#usdBalance").value = "0.00";
+    $("#usdTarget").value = "20.01";
+    $("#withdrawFee").value = "0.24";
+    $("#cnyPrice").value = "7.40";
+    
+    $("#safepalRatio").value = "0.99";
+    $("#truncIns").value = "0.01";
+    $("#extraIns").value = "0.02";
+    
+    lockAll();
+    calc();
+  });
+
+  // 监听输入
+  document.querySelectorAll("input").forEach(el => el.addEventListener("input", calc));
+  
+  // 初始化 (仅运行计算，不读取localStorage)
+  calc();
+
+</script>
+</body>
+</html>
